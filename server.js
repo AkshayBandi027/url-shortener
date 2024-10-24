@@ -1,44 +1,48 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const ShortUrl = require("./models/shorturl");
-const methodOverride = require("method-override");
+import express from "express"
+import mongoose from "mongoose"
+import { ShortUrl } from "./models/shortUrl.js"
+import userRoutes from "./routes/userRoute.js"
+import shortUrlRoutes from "./routes/shortUrlRoutes.js"
+import methodOverride from "method-override"
+import dotenv from "dotenv"
+import cookieParser from "cookie-parser"
+import { checkAuth } from "./middleware/authMiddleware.js"
+import cors from "cors"
+dotenv.config({ path: ".env" })
 
-const app = express();
+const app = express()
 
 // MongoDB connection
-mongoose.connect("mongodb://localhost/urlShrinker");
+mongoose.connect(process.env.DATABASE_URL)
 
-app.set("view engine", "ejs");
-app.use(express.urlencoded({ extended: false }));
-app.use(methodOverride("_method")); // Allows overriding methods using ?_method=DELETE
+app.set("view engine", "ejs")
+// CORS middleware
+const corsOptions = {
+  credentials: true,
+  origin: ['http://localhost:8080'] // Whitelist the domains you want to allow
+};
+app.use(cors(corsOptions))
+app.use(cookieParser());
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
+app.use(methodOverride("_method")) // Allows overriding methods using ?_method=DELETE
 
 // Route to display all short URLs
-app.get("/", async (req, res) => {
-  const shortUrls = await ShortUrl.find();
-  res.render("index", { shortUrls: shortUrls });
-});
+app.get("/",checkAuth, async (req, res) => {
+  const shortUrls = await ShortUrl.find()
+  res.render("index", { shortUrls: shortUrls })
+})
 
-// Route to create a new short URL
-app.post("/shortUrls", async (req, res) => {
-  await ShortUrl.create({ full: req.body.fullUrl });
-  res.redirect("/");
-});
+app.get("/login", (req,res) => {
+   res.render("login")
+})
 
-// Route to delete a short URL by ID
-app.delete("/shortUrls/:id", async (req, res) => {
-  await ShortUrl.findByIdAndDelete(req.params.id); // Delete the document from the database
-  res.redirect("/"); // Redirect back to the homepage after deletion
-});
+app.get("/signup", (req,res) => {
+  res.render("signup")
+})
 
-// Route to redirect to the full URL
-app.get("/:shortUrl", async (req, res) => {
-  const shortUrl = await ShortUrl.findOne({ short: req.params.shortUrl });
-  if (shortUrl == null) return res.sendStatus(404);
-
-  shortUrl.clicks++;
-  shortUrl.save();
-  res.redirect(shortUrl.full);
-});
+app.use('/api/users', userRoutes)
+app.use("/api/shortUrls", shortUrlRoutes)
 
 // Start the server
-app.listen(process.env.PORT || 8080);
+app.listen(process.env.PORT || 8080)

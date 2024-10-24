@@ -25,4 +25,4 @@ Technologies Used
 	•	MongoDB: For storing URL data
 	•	Mongoose: For managing MongoDB database schemas
 	•	EJS: For rendering templates on the frontend
-	•	ShortId: For generating unique shortened URLs
+	•	nanoId: For generating unique shortened URLs
