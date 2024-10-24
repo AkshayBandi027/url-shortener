@@ -8,6 +8,7 @@ npm-debug.log*
 
 # Environment variables
 .env
+notes_md
 
 # Build output
 dist/
